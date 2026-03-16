@@ -1,64 +1,100 @@
-# 🎵 Sekra — Emotion-Driven Music Recommendation System
+# 🎵 Reverie — Emotion-Aware Spotify Playlist Generation System
 
-> Type how you feel. Get a Spotify playlist that matches your mood.
+> Type how you feel. Reverie reads the emotion. Spotify gets the playlist.
 
-Sekra detects the emotional tone of your text using AI, maps it to a curated set of songs, and automatically creates a Spotify playlist in your account — all in one flow.
+Reverie detects the emotional tone of your free-form text using the Mistral AI API, maps it to a curated PostgreSQL database of annotated tracks using a multi-tier scoring engine, and automatically creates a Spotify playlist in your account — all in one flow. It also learns from your feedback over time.
 
 ---
 
 ## ✨ How It Works
+
 ```
-User types: "I feel lonely tonight"
+User types: "I just got played and I'm done with people"
         ↓
-  Emotion Detection (Mistral AI)
-  → primary: heartbreak, secondary: [sadness, loneliness]
+  Emotion Classification (Mistral AI REST API)
+  → primary: betrayal, secondary: [rage, self_respect]
+  → confidence: 87%
         ↓
-  Song Recommendation
-  → matches emotion to curated track dataset
+  Track Recommendation (Multi-Tier Scoring Engine)
+  → Primary exact match: +100 pts
+  → Secondary exact match: +30 pts each
+  → Cluster-adjacent match: +15 pts
+  → Audio tiebreaker (tempo + energy): +3 pts
+  → Feedback multipliers: ×1.3 liked / ×0.5 disliked
         ↓
   Spotify Integration
-  → creates playlist + adds tracks to your account
+  → Creates playlist with emotion-based description
+  → Adds tracks to your account via /playlists/{id}/items
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Python, FastAPI |
-| Emotion Detection | Mistral AI (via API) |
-| Music Matching | Preprocessed emotion → song dataset |
-| Spotify Integration | Spotify Web API, Spotipy (OAuth only) |
-| Frontend | HTML, CSS, JavaScript |
+| Layer | Technology | Purpose |
+|---|---|---|
+| Backend | Python, FastAPI, Uvicorn | REST API, pipeline orchestration |
+| Emotion Detection | Mistral AI REST API (`mistral-small-latest`) | 29-category emotion classification |
+| Database | PostgreSQL + SQLModel | Normalised track storage (Song, Emotion, Artist, Genre, Feedback) |
+| Music API | Spotify Web API, Spotipy | Playlist creation, track insertion, OAuth |
+| Frontend | HTML5, CSS3, Vanilla JS | Single-page interface |
+| Config | python-dotenv | Environment variable management |
 
 ---
 
 ## 📁 Project Structure
+
 ```
-app_1/
-├── main.py                        # FastAPI app, endpoints
+app_v2/
+├── main.py                        # FastAPI app, endpoints, session feedback store
 ├── backend/
-│   ├── recommend.py               # Emotion detection + song matching
-│   └── spotify_playlist.py        # Spotify OAuth + playlist creation
+│   ├── recommend.py               # Mistral API call, scoring engine, feedback logic
+│   ├── spotify_playlist.py        # Spotify OAuth + playlist creation
+│   ├── models.py                  # SQLModel table definitions
+│   └── db.py                      # Database session management
 ├── frontend/
 │   ├── index.html
-│   └── (js / css files)
-├── .env                           # Spotify credentials (never commit)
+│   ├── styles.css
+│   └── app.js
+├── .env                           # Credentials (never commit)
 └── .spotify_token_cache           # OAuth token cache (never commit)
 ```
+
+---
+
+## 🗄️ Database Schema
+
+Five normalised tables:
+
+| Table | Key Columns |
+|---|---|
+| **Song** | song_id, song_name, artist_id (FK), p_emotion_id (FK), s_emotion_1/2/3_id (FK), genre_id (FK), tempo, energy_level, lang, is_explicit, spotify_uri |
+| **Emotion** | emotion_id, emotion_name (29 categories) |
+| **Artist** | artist_id, name |
+| **Genre** | genre_id, genre_name |
+| **Feedback** | id, song_id (FK), emotion, rating (+1 / −1) |
+
+---
+
+## 🧠 Emotion Taxonomy
+
+29 categories:
+
+`win` `confidence` `flex` `hype` `determination` `motivation` `confidence_boost` `self_respect` `rebellion` `happiness` `celebration` `love` `hope` `calm` `manifesting` `healing` `nostalgia` `remembering` `introspection` `loneliness` `melancholy` `sadness` `hurt` `heartbreak` `betrayal` `rage` `stress` `exhaustion` `failure`
 
 ---
 
 ## ⚙️ Setup
 
 ### 1. Clone the repo
+
 ```bash
-git clone https://github.com/yourname/sekra.git
-cd sekra/app_1
+git clone https://github.com/yourname/reverie.git
+cd reverie/app_v2
 ```
 
 ### 2. Create and activate a virtual environment
+
 ```bash
 python -m venv .venv
 
@@ -70,37 +106,57 @@ source .venv/bin/activate
 ```
 
 ### 3. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 4. Configure environment variables
 
-Create a `.env` file in the `app_1/` directory:
+Create a `.env` file in the `app_v2/` directory:
+
 ```env
 SPOTIFY_CLIENT_ID=your_client_id_here
 SPOTIFY_CLIENT_SECRET=your_client_secret_here
+MISTRAL_API_KEY=your_mistral_api_key_here
+DATABASE_URL=postgresql://user:password@localhost:5432/reverie
 ```
 
-Get these from the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard).
+- Spotify credentials: [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+- Mistral API key: [console.mistral.ai](https://console.mistral.ai)
 
-### 5. Configure your Spotify app
+### 5. Set up the database
 
-In the Spotify Developer Dashboard, set:
+Run these in your PostgreSQL client to create the Feedback table (all other tables are created by SQLModel on startup):
+
+```sql
+CREATE TABLE feedback (
+    id          SERIAL PRIMARY KEY,
+    song_id     INTEGER NOT NULL REFERENCES song(song_id) ON DELETE CASCADE,
+    emotion     VARCHAR(50) NOT NULL,
+    rating      SMALLINT NOT NULL CHECK (rating IN (1, -1))
+);
+
+CREATE INDEX idx_feedback_song_emotion ON feedback(song_id, emotion);
+```
+
+### 6. Configure your Spotify app
+
+In the Spotify Developer Dashboard:
 - **Redirect URI:** `http://127.0.0.1:8000/callback`
-- **APIs used:** Web API, Web Playback SDK
 - **User Management:** Add your Spotify account email (required in Development Mode)
 
-> ⚠️ Your Spotify account must have an **active Premium subscription** for the Web API write endpoints to work in Development Mode.
+> ⚠️ Your Spotify account must have an **active Premium subscription** for write endpoints to work in Development Mode.
 
 ---
 
 ## 🚀 Running the App
+
 ```bash
 uvicorn main:app --reload
 ```
 
-On first run, Spotify will open a browser window for OAuth authorization. After authorizing, the token is cached in `.spotify_token_cache` for future runs.
+On first run, Spotify will open a browser window for OAuth authorisation. After authorising, the token is cached in `.spotify_token_cache` for future runs.
 
 Open your browser at: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
@@ -109,31 +165,52 @@ Open your browser at: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 ## 🔌 API Endpoints
 
 ### `POST /recommend`
-Detects emotion from text and returns matching track IDs.
+
+Classifies emotion from text and returns ranked matching tracks.
 
 **Request:**
 ```json
-{ "text": "I feel lonely tonight" }
+{
+  "text": "I just got played and I'm done with people",
+  "allow_explicit": true
+}
 ```
 
 **Response:**
 ```json
 {
-  "emotion": { "primary": "heartbreak", "secondary": ["sadness", "loneliness"] },
-  "spotify_uris": ["4Ttg2ZRg24knfykSp52aiM", "1Y7FQSN29oNXHZBGMkADeH"]
+  "emotion": {
+    "primary": "betrayal",
+    "secondary": ["rage", "self_respect"],
+    "confidence": 87
+  },
+  "songs": [
+    {
+      "song_id": 12,
+      "song_name": "Baatein",
+      "artist_name": "Raabta",
+      "spotify_uri": "spotify:track:4Ttg2ZRg24knfykSp52aiM",
+      "is_explicit": false,
+      "score": 130
+    }
+  ]
 }
 ```
 
 ---
 
 ### `POST /create-playlist`
+
 Creates a Spotify playlist and adds the recommended tracks.
 
 **Request:**
 ```json
 {
-  "name": "Heartbreak Mood Playlist",
-  "spotify_uris": ["4Ttg2ZRg24knfykSp52aiM", "1Y7FQSN29oNXHZBGMkADeH"]
+  "name": "Played by Reverie",
+  "spotify_uris": ["spotify:track:4Ttg2ZRg24knfykSp52aiM"],
+  "primary_emotion": "betrayal",
+  "secondary_emotions": ["rage", "self_respect"],
+  "prompt": "I just got played and I'm done with people"
 }
 ```
 
@@ -142,19 +219,45 @@ Creates a Spotify playlist and adds the recommended tracks.
 {
   "playlist_id": "26Lj5ld57gCfF9fg1Qd6pm",
   "playlist_url": "https://open.spotify.com/playlist/26Lj5ld57gCfF9fg1Qd6pm",
-  "track_count": 5
+  "track_count": 10
 }
 ```
+
+The playlist description is automatically set to: `"I just got played and I'm done with people" — Reverie detected: betrayal · rage · self_respect`
+
+---
+
+### `POST /feedback`
+
+Records a user rating for a track in the context of a specific emotion.
+
+**Request:**
+```json
+{
+  "song_id": 12,
+  "emotion": "betrayal",
+  "rating": -1
+}
+```
+
+**Response:**
+```json
+{ "status": "ok", "song_id": 12, "rating": -1 }
+```
+
+Ratings affect the score of that track on the **next** `/recommend` call for the same emotion:
+- `+1` (like) → score ×1.3
+- `-1` (dislike) → score ×0.5
 
 ---
 
 ## 🔐 OAuth Flow
 
-Sekra uses Spotify's **Authorization Code Flow**:
+Reverie uses Spotify's **Authorization Code Flow**:
 
 1. On startup, the app checks for a cached token in `.spotify_token_cache`
 2. If none exists, it opens a browser for Spotify login
-3. After authorization, Spotify redirects to `http://127.0.0.1:8000/callback`
+3. After authorisation, Spotify redirects to `http://127.0.0.1:8000/callback`
 4. The token is cached locally for future sessions
 
 **Required scopes:**
@@ -164,35 +267,40 @@ playlist-modify-public
 playlist-read-private
 ```
 
+> **Note (Feb 2026):** Spotipy's `user_playlist_create()` and `playlist_add_items()` wrappers return HTTP 403 in Development Mode. Reverie bypasses both — playlist creation uses `sp._post("me/playlists")` directly, and track insertion uses raw `requests.post` to `/playlists/{id}/items`.
+
 ---
 
 ## 🚫 .gitignore
 
 Make sure these are excluded from version control:
+
 ```
 .env
 .spotify_token_cache
 .venv/
 __pycache__/
+*.pyc
 ```
 
 ---
 
 ## 📌 Known Limitations
 
-- **Development Mode only** — up to 5 Spotify users can use the app. To allow more users, apply for Extended Access on the Spotify Developer Dashboard.
-- **Static emotion-song mapping** — the dataset is preprocessed and not personalized to listening history.
-- **Single user session** — the app is designed for one authenticated Spotify account at a time.
-- **Spotify API (Feb 2026)** — track insertion uses the `/playlists/{id}/items` endpoint. The older `/tracks` endpoint is no longer supported for Development Mode apps.
+- **Development Mode only** — up to 5 Spotify users. Apply for Extended Access on the Spotify Developer Dashboard for more.
+- **Manually curated database** — tracks are hand-annotated; the dataset is currently limited in size.
+- **Single user session** — designed for one authenticated Spotify account at a time.
+- **Session feedback resets on restart** — in-memory feedback is lost when the server stops; persisted DB feedback carries over.
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Replace static dataset with dynamic Spotify search by mood/genre
-- [ ] Add user listening history personalization
-- [ ] Support multiple concurrent users with per-session OAuth
-- [ ] Improve emotion detection with multi-label confidence scores
+- [ ] Scale DB using a fine-tuned LLM on song lyrics for existing catalogue
+- [ ] Artist emotion-tagging integration at upload via DistroKid / RouteNote
+- [ ] Language-based track filtering (detect input language, surface matching tracks)
+- [ ] Artist diversity cap (max 2 tracks per artist per playlist)
+- [ ] Cluster fallback when primary emotion has fewer than N results
 
 ---
 
