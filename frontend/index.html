@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reverie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="icon" type="image/x-icon" href="/static/icon.png">
+</head>
+<body>
+
+  <div class="scanlines"></div>
+  <div class="grain"></div>
+  <canvas id="bgCanvas"></canvas>
+
+  <!-- ═══ EARPHONES — SVG drawing fixed top-right ═══ -->
+  <div class="earphones-wrap">
+    <svg class="earphones-svg" viewBox="0 0 160 260" xmlns="http://www.w3.org/2000/svg">
+      <!-- jack plug at top -->
+      <rect x="78" y="0" width="4" height="14" rx="2" fill="rgba(255,255,255,0.5)"/>
+      <rect x="75" y="12" width="10" height="6" rx="2" fill="rgba(255,255,255,0.3)"/>
+      <!-- main wire down -->
+      <path d="M80 18 C80 60 80 80 80 110" stroke="rgba(255,255,255,0.22)" stroke-width="2.5" fill="none" stroke-linecap="round" class="wire-main"/>
+      <!-- Y-split -->
+      <path d="M80 110 C60 125 35 140 28 185" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none" stroke-linecap="round" class="wire-left"/>
+      <path d="M80 110 C100 125 128 140 132 185" stroke="rgba(255,255,255,0.18)" stroke-width="2" fill="none" stroke-linecap="round" class="wire-right"/>
+      <!-- remote/slider on main wire -->
+      <rect x="73" y="68" width="14" height="20" rx="3" fill="#1a1a18" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+      <rect x="77" y="73" width="6" height="1.5" rx="1" fill="rgba(30,215,96,0.7)"/>
+      <rect x="77" y="78" width="4" height="1.5" rx="1" fill="rgba(255,255,255,0.2)"/>
+      <rect x="77" y="83" width="6" height="1.5" rx="1" fill="rgba(255,255,255,0.2)"/>
+      <!-- LEFT EARBUD -->
+      <ellipse cx="24" cy="205" rx="14" ry="16" fill="#1c1c1a" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" class="bud-l"/>
+      <ellipse cx="24" cy="205" rx="8" ry="9" fill="#111110" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <circle cx="24" cy="205" r="4" fill="none" stroke="rgba(30,215,96,0.5)" stroke-width="1.5"/>
+      <circle cx="24" cy="205" r="2" fill="rgba(30,215,96,0.7)" class="bud-glow"/>
+      <!-- ear tip left -->
+      <ellipse cx="14" cy="214" rx="6" ry="8" fill="#222220" stroke="rgba(255,255,255,0.12)" stroke-width="1" transform="rotate(-20,14,214)"/>
+      <!-- RIGHT EARBUD -->
+      <ellipse cx="136" cy="205" rx="14" ry="16" fill="#1c1c1a" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" class="bud-r"/>
+      <ellipse cx="136" cy="205" rx="8" ry="9" fill="#111110" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <circle cx="136" cy="205" r="4" fill="none" stroke="rgba(30,215,96,0.5)" stroke-width="1.5"/>
+      <circle cx="136" cy="205" r="2" fill="rgba(30,215,96,0.7)" class="bud-glow"/>
+      <!-- ear tip right -->
+      <ellipse cx="146" cy="214" rx="6" ry="8" fill="#222220" stroke="rgba(255,255,255,0.12)" stroke-width="1" transform="rotate(20,146,214)"/>
+    </svg>
+  </div>
+
+  <!-- ═══ SPEAKER LEFT — SVG ═══ -->
+  <div class="speaker-wrap speaker-wrap-left">
+    <svg class="speaker-svg" viewBox="0 0 70 160" xmlns="http://www.w3.org/2000/svg">
+      <!-- cabinet body -->
+      <rect x="5" y="5" width="60" height="150" rx="8" fill="#111110" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+      <!-- top label strip -->
+      <rect x="5" y="5" width="60" height="18" rx="8" fill="#1a1a18"/>
+      <rect x="5" y="16" width="60" height="7" fill="#1a1a18"/>
+      <text x="35" y="17" text-anchor="middle" fill="rgba(30,215,96,0.7)" font-family="'Space Mono',monospace" font-size="5" letter-spacing="1">REV-L</text>
+      <!-- main woofer circle -->
+      <circle cx="35" cy="75" r="26" fill="#0d0d0c" stroke="rgba(255,255,255,0.12)" stroke-width="2" class="woofer"/>
+      <!-- woofer rings -->
+      <circle cx="35" cy="75" r="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+      <circle cx="35" cy="75" r="14" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+      <circle cx="35" cy="75" r="8"  fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+      <!-- dust cap -->
+      <circle cx="35" cy="75" r="5" fill="#1a1a18" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <!-- sound wave rings (animated in CSS) -->
+      <circle cx="35" cy="75" r="30" fill="none" stroke="rgba(30,215,96,0.15)" stroke-width="1" class="wave-ring rng1"/>
+      <circle cx="35" cy="75" r="35" fill="none" stroke="rgba(30,215,96,0.09)" stroke-width="1" class="wave-ring rng2"/>
+      <!-- tweeter -->
+      <circle cx="35" cy="122" r="10" fill="#0d0d0c" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+      <circle cx="35" cy="122" r="5"  fill="#111110" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      <circle cx="35" cy="122" r="2"  fill="#1a1a18"/>
+      <!-- bottom grille dots -->
+      <circle cx="20" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="28" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="36" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="44" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="52" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="20" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="28" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="36" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="44" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="52" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+    </svg>
+  </div>
+
+  <!-- ═══ SPEAKER RIGHT — SVG ═══ -->
+  <div class="speaker-wrap speaker-wrap-right">
+    <svg class="speaker-svg" viewBox="0 0 70 160" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="5" width="60" height="150" rx="8" fill="#111110" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+      <rect x="5" y="5" width="60" height="18" rx="8" fill="#1a1a18"/>
+      <rect x="5" y="16" width="60" height="7" fill="#1a1a18"/>
+      <text x="35" y="17" text-anchor="middle" fill="rgba(30,215,96,0.7)" font-family="'Space Mono',monospace" font-size="5" letter-spacing="1">REV-R</text>
+      <circle cx="35" cy="75" r="26" fill="#0d0d0c" stroke="rgba(255,255,255,0.12)" stroke-width="2" class="woofer"/>
+      <circle cx="35" cy="75" r="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+      <circle cx="35" cy="75" r="14" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
+      <circle cx="35" cy="75" r="8"  fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+      <circle cx="35" cy="75" r="5" fill="#1a1a18" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <circle cx="35" cy="75" r="30" fill="none" stroke="rgba(30,215,96,0.15)" stroke-width="1" class="wave-ring rng1"/>
+      <circle cx="35" cy="75" r="35" fill="none" stroke="rgba(30,215,96,0.09)" stroke-width="1" class="wave-ring rng2"/>
+      <circle cx="35" cy="122" r="10" fill="#0d0d0c" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+      <circle cx="35" cy="122" r="5"  fill="#111110" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+      <circle cx="35" cy="122" r="2"  fill="#1a1a18"/>
+      <circle cx="20" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="28" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="36" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="44" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="52" cy="142" r="2" fill="rgba(255,255,255,0.06)"/>
+      <circle cx="20" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="28" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="36" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="44" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="52" cy="148" r="2" fill="rgba(255,255,255,0.04)"/>
+    </svg>
+  </div>
+
+  <div class="app">
+
+    <header class="header">
+      <div class="logo-block">
+        <div class="eq-bars">
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span>
+          <span></span><span></span>
+        </div>
+        <div class="logo-text-block">
+          <span class="logo-name">REVERIE</span>
+          <span class="logo-sub">// EMOTION ENGINE v1.0</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="status-dot"></span>
+        <span class="status-text">LIVE</span>
+      </div>
+    </header>
+
+    <main class="main">
+
+      <section class="input-section">
+        <div class="section-label">
+          <span class="label-num">01</span>
+          <span class="label-text">DROP YOUR FEELING</span>
+        </div>
+
+        <!-- ═══ CASSETTE TAPE DECK ═══ -->
+        <div class="tape-deck">
+          <!-- cassette body outline -->
+          <div class="cassette-body">
+            <div class="cassette-top-bar">
+              <span class="tape-brand">REVERIE // TYPE-B</span>
+              <div class="tape-indicators">
+                <span class="tape-led"></span>
+                <span class="tape-led active"></span>
+                <span class="tape-led"></span>
+              </div>
+              <span class="tape-duration">C-90</span>
+            </div>
+
+            <div class="cassette-mid">
+              <!-- left reel -->
+              <div class="cassette-reel-wrap">
+                <div class="cassette-reel" id="reelLeft">
+                  <div class="reel-outer">
+                    <div class="reel-spokes">
+                      <div class="reel-spoke"></div>
+                      <div class="reel-spoke"></div>
+                      <div class="reel-spoke"></div>
+                    </div>
+                    <div class="reel-hub"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- tape path window -->
+              <div class="cassette-window">
+                <div class="cassette-tape-path">
+                  <div class="tape-path-line"></div>
+                </div>
+                <textarea id="userInput" placeholder="i've been feeling like nothing's going the way i planned..."></textarea>
+                <div class="cassette-notch left-notch"></div>
+                <div class="cassette-notch right-notch"></div>
+              </div>
+
+              <!-- right reel -->
+              <div class="cassette-reel-wrap">
+                <div class="cassette-reel" id="reelRight">
+                  <div class="reel-outer">
+                    <div class="reel-spokes">
+                      <div class="reel-spoke"></div>
+                      <div class="reel-spoke"></div>
+                      <div class="reel-spoke"></div>
+                    </div>
+                    <div class="reel-hub"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cassette-bottom-bar">
+              <div class="cassette-holes">
+                <div class="cassette-hole"></div>
+                <div class="cassette-hole"></div>
+                <div class="cassette-hole"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- explicit filter -->
+        <div class="filter-row">
+          <span class="filter-label">EXPLICIT</span>
+          <label class="toggle">
+            <input type="checkbox" id="explicitToggle" checked />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+          <span class="filter-status" id="filterStatus">ON</span>
+        </div>
+
+        <button id="submitBtn" class="btn-primary">
+          <span class="btn-text">GENERATE</span>
+          <div class="btn-bars">
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+          </div>
+        </button>
+      </section>
+
+      <!-- LOADER -->
+      <div id="loader" class="loader hidden">
+        <div class="vinyl-wrap">
+          <div class="vinyl">
+            <div class="vinyl-groove g1"></div>
+            <div class="vinyl-groove g2"></div>
+            <div class="vinyl-groove g3"></div>
+            <div class="vinyl-groove g4"></div>
+            <div class="vinyl-label">
+              <span class="vinyl-title">REVERIE</span>
+              <span class="vinyl-sub">SIDE A</span>
+            </div>
+            <div class="vinyl-shine"></div>
+          </div>
+          <div class="vinyl-arm"></div>
+          <div class="vinyl-base"></div>
+        </div>
+        <p class="loader-text">READING YOUR EMOTION<span class="blink">_</span></p>
+        <div class="loader-waveform">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span>
+        </div>
+      </div>
+
+      <!-- EMOTION DISPLAY -->
+      <div id="emotionInfo" class="emotion-display hidden">
+        <div class="emotion-header">
+          <span class="emotion-tape-label">// DETECTED EMOTION</span>
+          <div class="emotion-header-right">
+            <span id="emotionConfidence" class="emotion-confidence-badge"></span>
+            <span class="emotion-pulse-dot"></span>
+          </div>
+        </div>
+        <div class="emotion-row">
+          <span id="emotionPrimary" class="emotion-primary"></span>
+          <span id="emotionSecondary" class="emotion-secondary"></span>
+        </div>
+        <div class="emotion-waveform">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <section id="results" class="results hidden">
+        <div class="section-label">
+          <span class="label-num">02</span>
+          <span class="label-text">YOUR TRACKLIST</span>
+          <span id="trackCount" class="track-count-badge"></span>
+        </div>
+        <ul id="songList" class="song-list"></ul>
+      </section>
+
+      <!-- SPOTIFY BUTTON -->
+      <button id="createPlaylistBtn" class="btn-spotify hidden">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="spotify-icon">
+          <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+        </svg>
+        <span>PUSH TO SPOTIFY</span>
+      </button>
+
+      <!-- SUCCESS -->
+      <div id="playlistLink" class="playlist-success hidden">
+        <div class="success-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="check-icon">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span class="success-title">PLAYLIST LIVE</span>
+          <a id="spotifyLink" target="_blank" class="success-link">OPEN IN SPOTIFY →</a>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="footer">
+      <div class="footer-eq">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <span class="footer-text">REVERIE // EMOTION-DRIVEN MUSIC // MUJ 2025–26</span>
+      <div class="footer-eq">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
