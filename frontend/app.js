@@ -23,6 +23,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPromptText        = "";   // stores raw user input for playlist description
   let reelTimer                = null;
 
+  // ── TRACK COUNT SLIDER ────────────────────────────────────
+  const trackCountSlider = document.getElementById("trackCountSlider");
+  const sliderValue      = document.getElementById("sliderValue");
+  const sliderFill       = document.getElementById("sliderFill");
+
+  function updateSliderFill() {
+    const min = parseInt(trackCountSlider.min);
+    const max = parseInt(trackCountSlider.max);
+    const val = parseInt(trackCountSlider.value);
+    const pct = ((val - min) / (max - min)) * 100;
+    sliderFill.style.width = `${pct}%`;
+    sliderValue.textContent = val;
+  }
+
+  trackCountSlider.addEventListener("input", updateSliderFill);
+  updateSliderFill(); // initialise on load
+
   // ── BACKGROUND CANVAS ─────────────────────────────────────
   const canvas = document.getElementById("bgCanvas");
   const ctx    = canvas.getContext("2d");
@@ -99,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res  = await fetch("/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, allow_explicit: explicitToggle.checked })
+        body: JSON.stringify({ text, allow_explicit: explicitToggle.checked, track_count: parseInt(trackCountSlider.value) })
       });
       const data = await res.json();
 

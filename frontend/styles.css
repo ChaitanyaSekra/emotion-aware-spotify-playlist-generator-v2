@@ -479,6 +479,110 @@ textarea::placeholder { color: var(--text-muted); font-style: italic; }
 }
 .filter-status.off { color: var(--text-muted); }
 
+/* =====================
+   DJ TRACK SLIDER
+   ===================== */
+.slider-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 10px;
+}
+
+.dj-slider-wrap {
+  flex: 1; display: flex; align-items: center; gap: 7px;
+}
+
+.slider-tick {
+  font-family: var(--font-mono); font-size: 0.55rem;
+  color: var(--text-muted); letter-spacing: 0.06em; flex-shrink: 0;
+}
+
+.slider-value {
+  font-family: var(--font-mono); font-size: 0.7rem;
+  color: var(--green); letter-spacing: 0.08em;
+  min-width: 24px; text-align: right; flex-shrink: 0;
+}
+
+.dj-slider-track {
+  position: relative; flex: 1; height: 20px;
+  display: flex; align-items: center;
+}
+
+/* filled portion of the track */
+.dj-slider-fill {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  height: 3px; border-radius: 2px;
+  background: var(--green);
+  pointer-events: none; z-index: 1;
+  transition: width 0.05s;
+  box-shadow: 0 0 6px var(--green-glow);
+}
+
+/* notch marks along the track */
+.dj-notches {
+  position: absolute; left: 0; right: 0; top: 50%;
+  transform: translateY(-50%);
+  display: flex; justify-content: space-between; pointer-events: none;
+  padding: 0 1px;
+}
+
+.dj-notches span {
+  width: 1px; height: 6px; background: var(--border);
+  border-radius: 1px; flex-shrink: 0;
+}
+
+/* the actual range input — hidden track, custom thumb */
+.dj-slider {
+  position: relative; z-index: 2;
+  width: 100%; margin: 0;
+  -webkit-appearance: none; appearance: none;
+  background: transparent; cursor: pointer;
+  height: 20px;
+}
+
+/* track */
+.dj-slider::-webkit-slider-runnable-track {
+  height: 3px; border-radius: 2px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+}
+.dj-slider::-moz-range-track {
+  height: 3px; border-radius: 2px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+}
+
+/* thumb — the DJ knob */
+.dj-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #2e2e2c, #111110);
+  border: 2px solid var(--green);
+  box-shadow: 0 0 8px var(--green-glow), inset 0 1px 2px rgba(255,255,255,0.12);
+  margin-top: -7.5px;
+  cursor: grab; position: relative; z-index: 3;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.dj-slider::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #2e2e2c, #111110);
+  border: 2px solid var(--green);
+  box-shadow: 0 0 8px var(--green-glow), inset 0 1px 2px rgba(255,255,255,0.12);
+  cursor: grab;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.dj-slider:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  box-shadow: 0 0 14px var(--green-glow), inset 0 1px 2px rgba(255,255,255,0.12);
+  transform: scale(1.15);
+}
+.dj-slider:active::-moz-range-thumb {
+  cursor: grabbing;
+  box-shadow: 0 0 14px var(--green-glow);
+  transform: scale(1.15);
+}
+
+.dj-slider:focus { outline: none; }
+
 .toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
 .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
 

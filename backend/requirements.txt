@@ -7,3 +7,4 @@ python-dotenv
 spotipy
 psycopg2-binary
 python-dotenv
+matplotlib

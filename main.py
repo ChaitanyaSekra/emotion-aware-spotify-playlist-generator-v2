@@ -67,13 +67,11 @@ app.add_middleware(
 class EmotionRequest(BaseModel):
     text: str
     allow_explicit: bool = True
+    track_count: int = 10   # number of tracks to return (5-25, clamped in backend)
 
 class PlaylistRequest(BaseModel):
     name: str
     spotify_uris: List[str]
-    primary_emotion: str = ""
-    secondary_emotions: List[str] = []
-    prompt: str = ""   # original user input text
 
 class FeedbackRequest(BaseModel):
     song_id: int
@@ -90,6 +88,7 @@ def recommend(req: EmotionRequest):
         text=req.text,
         allow_explicit=req.allow_explicit,
         session_feedback=_session_feedback,
+        track_count=req.track_count,
     )
 
 @app.post("/feedback")
@@ -107,21 +106,8 @@ def feedback(req: FeedbackRequest):
 
 @app.post("/create-playlist")
 def create_playlist_endpoint(req: PlaylistRequest):
-    # Build a meaningful description using the user's actual prompt
-    if req.primary_emotion and req.prompt:
-        emotions_str = " · ".join([req.primary_emotion] + req.secondary_emotions)
-        # Truncate prompt to 80 chars so description stays clean on Spotify
-        short_prompt = req.prompt[:80] + ("..." if len(req.prompt) > 80 else "")
-        description = f'"{short_prompt}" — Reverie detected: {emotions_str}'
-    elif req.primary_emotion:
-        parts = [req.primary_emotion] + req.secondary_emotions
-        description = "Reverie detected: " + " · ".join(parts)
-    else:
-        description = "Emotion-driven playlist by Reverie"
-
     return create_playlist(
         playlist_name=req.name,
         spotify_uris=req.spotify_uris,
-        description=description,
         public=False
     )

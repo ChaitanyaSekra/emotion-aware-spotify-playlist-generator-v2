@@ -344,7 +344,8 @@ def get_feedback_map(song_ids: List[int], emotion: str) -> Dict[int, int]:
 def get_recommendations(
     text: str,
     allow_explicit: bool = True,
-    session_feedback: Dict[int, int] = None  # {song_id: +1/-1} accumulated this session
+    session_feedback: Dict[int, int] = None,  # {song_id: +1/-1} accumulated this session
+    track_count: int = 10                      # number of tracks to return (5-25)
 ) -> Dict:
 
     user_emotion = extract_emotions(text)
@@ -352,6 +353,7 @@ def get_recommendations(
     print(f"Primary   : {user_emotion['primary']}")
     print(f"Secondary : {user_emotion['secondary']}")
     print(f"Explicit  : {'allowed' if allow_explicit else 'filtered out'}")
+    print(f"Tracks    : {track_count}")
     print("------------------------------\n")
 
     with get_session() as session:
@@ -412,5 +414,5 @@ def get_recommendations(
 
     return {
         "emotion": user_emotion,
-        "songs":   ranked[:10],
+        "songs":   ranked[:max(5, min(25, track_count))],
     }

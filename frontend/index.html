@@ -219,6 +219,27 @@
           <span class="filter-status" id="filterStatus">ON</span>
         </div>
 
+        <!-- track count slider -->
+        <div class="slider-row">
+          <span class="filter-label">TRACKS</span>
+          <div class="dj-slider-wrap">
+            <span class="slider-tick">5</span>
+            <div class="dj-slider-track">
+              <div class="dj-slider-fill" id="sliderFill"></div>
+              <input type="range" id="trackCountSlider" min="5" max="25" step="1" value="10" class="dj-slider" />
+              <div class="dj-notches">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span>
+              </div>
+            </div>
+            <span class="slider-tick">25</span>
+          </div>
+          <span class="slider-value" id="sliderValue">10</span>
+        </div>
+
         <button id="submitBtn" class="btn-primary">
           <span class="btn-text">GENERATE</span>
           <div class="btn-bars">
