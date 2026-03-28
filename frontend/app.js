@@ -23,22 +23,116 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPromptText        = "";   // stores raw user input for playlist description
   let reelTimer                = null;
 
-  // ── TRACK COUNT SLIDER ────────────────────────────────────
-  const trackCountSlider = document.getElementById("trackCountSlider");
-  const sliderValue      = document.getElementById("sliderValue");
-  const sliderFill       = document.getElementById("sliderFill");
+  // ── DJ ROTARY KNOB ────────────────────────────────────────
+  const knobCanvas  = document.getElementById("knobCanvas");
+  const knobCtx     = knobCanvas.getContext("2d");
+  const knobValueEl = document.getElementById("knobValue");
+  const djKnobBody  = document.getElementById("djKnobBody");
 
-  function updateSliderFill() {
-    const min = parseInt(trackCountSlider.min);
-    const max = parseInt(trackCountSlider.max);
-    const val = parseInt(trackCountSlider.value);
-    const pct = ((val - min) / (max - min)) * 100;
-    sliderFill.style.width = `${pct}%`;
-    sliderValue.textContent = val;
+  const KNOB_MIN      = 5;
+  const KNOB_MAX      = 25;
+  const KNOB_START    = 225;   // degrees — bottom-left
+  const KNOB_SWEEP    = 270;   // total arc degrees
+  let   knobValue     = 10;
+
+  function degToRad(d) { return d * Math.PI / 180; }
+
+  function drawKnob() {
+    const cx = 32, cy = 32, r = 27;
+    knobCtx.clearRect(0, 0, 64, 64);
+    const pct      = (knobValue - KNOB_MIN) / (KNOB_MAX - KNOB_MIN);
+    const startRad = degToRad(KNOB_START);
+    const endRad   = degToRad(KNOB_START + KNOB_SWEEP);
+    const fillRad  = degToRad(KNOB_START + pct * KNOB_SWEEP);
+
+    // background arc track
+    knobCtx.beginPath();
+    knobCtx.arc(cx, cy, r - 4, startRad, endRad);
+    knobCtx.strokeStyle = "rgba(255,255,255,0.07)";
+    knobCtx.lineWidth = 4; knobCtx.lineCap = "round";
+    knobCtx.stroke();
+
+    // filled arc
+    knobCtx.beginPath();
+    knobCtx.arc(cx, cy, r - 4, startRad, fillRad);
+    knobCtx.strokeStyle = "rgba(30,215,96,0.9)";
+    knobCtx.lineWidth = 4; knobCtx.lineCap = "round";
+    knobCtx.shadowColor = "rgba(30,215,96,0.55)";
+    knobCtx.shadowBlur = 7;
+    knobCtx.stroke();
+    knobCtx.shadowBlur = 0;
+
+    // tick marks
+    const steps = KNOB_MAX - KNOB_MIN;
+    for (let i = 0; i <= steps; i++) {
+      const tp  = i / steps;
+      const tr  = degToRad(KNOB_START + tp * KNOB_SWEEP);
+      const big = i % 5 === 0;
+      const ri  = r + 1, ro = r + (big ? 7 : 4);
+      knobCtx.beginPath();
+      knobCtx.moveTo(cx + Math.cos(tr) * ri, cy + Math.sin(tr) * ri);
+      knobCtx.lineTo(cx + Math.cos(tr) * ro, cy + Math.sin(tr) * ro);
+      knobCtx.strokeStyle = tp <= pct + 0.01 ? "rgba(30,215,96,0.65)" : "rgba(255,255,255,0.11)";
+      knobCtx.lineWidth = big ? 2 : 1; knobCtx.lineCap = "butt";
+      knobCtx.stroke();
+    }
+
+    // knob body
+    const grad = knobCtx.createRadialGradient(cx - 5, cy - 6, 2, cx, cy, r - 5);
+    grad.addColorStop(0, "#2e2e2c"); grad.addColorStop(1, "#0e0e0d");
+    knobCtx.beginPath();
+    knobCtx.arc(cx, cy, r - 5, 0, Math.PI * 2);
+    knobCtx.fillStyle = grad; knobCtx.fill();
+    knobCtx.strokeStyle = "rgba(255,255,255,0.1)";
+    knobCtx.lineWidth = 1; knobCtx.stroke();
+
+    // indicator line
+    const ir  = degToRad(KNOB_START + pct * KNOB_SWEEP);
+    knobCtx.beginPath();
+    knobCtx.moveTo(cx + Math.cos(ir) * 5, cy + Math.sin(ir) * 5);
+    knobCtx.lineTo(cx + Math.cos(ir) * (r - 8), cy + Math.sin(ir) * (r - 8));
+    knobCtx.strokeStyle = "rgba(30,215,96,0.95)";
+    knobCtx.lineWidth = 2; knobCtx.lineCap = "round";
+    knobCtx.shadowColor = "rgba(30,215,96,0.8)"; knobCtx.shadowBlur = 5;
+    knobCtx.stroke(); knobCtx.shadowBlur = 0;
   }
 
-  trackCountSlider.addEventListener("input", updateSliderFill);
-  updateSliderFill(); // initialise on load
+  function setKnobValue(v) {
+    knobValue = Math.max(KNOB_MIN, Math.min(KNOB_MAX, Math.round(v)));
+    knobValueEl.textContent = knobValue;
+    drawKnob();
+  }
+
+  // drag interaction
+  let _dragging = false, _dragY = 0, _dragStartVal = 0;
+
+  djKnobBody.addEventListener("mousedown", (e) => {
+    _dragging = true; _dragY = e.clientY; _dragStartVal = knobValue;
+    e.preventDefault();
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!_dragging) return;
+    setKnobValue(_dragStartVal + (_dragY - e.clientY) / 6);
+  });
+  window.addEventListener("mouseup", () => { _dragging = false; });
+
+  djKnobBody.addEventListener("touchstart", (e) => {
+    _dragging = true; _dragY = e.touches[0].clientY; _dragStartVal = knobValue;
+    e.preventDefault();
+  }, { passive: false });
+  window.addEventListener("touchmove", (e) => {
+    if (!_dragging) return;
+    setKnobValue(_dragStartVal + (_dragY - e.touches[0].clientY) / 6);
+  });
+  window.addEventListener("touchend", () => { _dragging = false; });
+
+  djKnobBody.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    setKnobValue(knobValue + (e.deltaY < 0 ? 1 : -1));
+  }, { passive: false });
+
+  drawKnob();
+
 
   // ── BACKGROUND CANVAS ─────────────────────────────────────
   const canvas = document.getElementById("bgCanvas");
@@ -116,7 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res  = await fetch("/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, allow_explicit: explicitToggle.checked, track_count: parseInt(trackCountSlider.value) })
+        body: JSON.stringify({ text, allow_explicit: explicitToggle.checked, track_count: knobValue })
       });
       const data = await res.json();
 

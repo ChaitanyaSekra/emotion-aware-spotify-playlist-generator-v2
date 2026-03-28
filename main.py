@@ -72,6 +72,9 @@ class EmotionRequest(BaseModel):
 class PlaylistRequest(BaseModel):
     name: str
     spotify_uris: List[str]
+    primary_emotion: str = ""
+    secondary_emotions: List[str] = []
+    prompt: str = ""   # original user input text
 
 class FeedbackRequest(BaseModel):
     song_id: int
@@ -106,8 +109,21 @@ def feedback(req: FeedbackRequest):
 
 @app.post("/create-playlist")
 def create_playlist_endpoint(req: PlaylistRequest):
+    # Build a meaningful description using the user's actual prompt
+    if req.primary_emotion and req.prompt:
+        emotions_str = " · ".join([req.primary_emotion] + req.secondary_emotions)
+        # Truncate prompt to 80 chars so description stays clean on Spotify
+        short_prompt = req.prompt[:80] + ("..." if len(req.prompt) > 80 else "")
+        description = f'"{short_prompt}" — Reverie detected: {emotions_str}'
+    elif req.primary_emotion:
+        parts = [req.primary_emotion] + req.secondary_emotions
+        description = "Reverie detected: " + " · ".join(parts)
+    else:
+        description = "Emotion-driven playlist by Reverie"
+
     return create_playlist(
         playlist_name=req.name,
         spotify_uris=req.spotify_uris,
+        description=description,
         public=False
     )

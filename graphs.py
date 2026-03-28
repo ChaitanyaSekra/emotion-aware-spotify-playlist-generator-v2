@@ -84,4 +84,52 @@ plt.savefig(os.path.join(output_dir, "tempo_pie.png"), dpi=150)
 plt.show()
 print("Saved: tempo_pie.png")
 
+# ─── 6. BAR CHART: Emotions (primary) ──────────────
+emotion_cols = ["p_emotion"]
+
+all_emotions = pd.concat([df[col] for col in emotion_cols], ignore_index=True)
+all_emotions = all_emotions.dropna().str.strip()
+emotion_counts = all_emotions.value_counts()
+
+fig, ax = plt.subplots(figsize=(16, 7))
+colors = plt.cm.tab20.colors
+bars = ax.bar(emotion_counts.index, emotion_counts.values,
+              color=[colors[i % len(colors)] for i in range(len(emotion_counts))])
+ax.set_title("Number of Songs per Emotion (Primary)", fontsize=16, fontweight="bold", pad=15)
+ax.set_xlabel("Emotion", fontsize=12)
+ax.set_ylabel("Count", fontsize=12)
+ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+plt.xticks(rotation=45, ha="right", fontsize=9)
+for bar in bars:
+    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
+            str(int(bar.get_height())), ha="center", va="bottom", fontsize=8)
+plt.tight_layout()
+plt.savefig(os.path.join(output_dir, "emotion_bar_primary.png"), dpi=150)
+plt.show()
+print("Saved: emotion_bar_primary.png")
+
+# ─── 7. BAR CHART: All emotions combined (secondary) ──────────────
+emotion_cols = ["s_emotion_1", "s_emotion_2", "s_emotion_3"]
+
+all_emotions = pd.concat([df[col] for col in emotion_cols], ignore_index=True)
+all_emotions = all_emotions.dropna().str.strip()
+emotion_counts = all_emotions.value_counts()
+
+fig, ax = plt.subplots(figsize=(16, 7))
+colors = plt.cm.tab20.colors
+bars = ax.bar(emotion_counts.index, emotion_counts.values,
+              color=[colors[i % len(colors)] for i in range(len(emotion_counts))])
+ax.set_title("Number of Songs per Emotion (Secondary All)", fontsize=16, fontweight="bold", pad=15)
+ax.set_xlabel("Emotion", fontsize=12)
+ax.set_ylabel("Count", fontsize=12)
+ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
+plt.xticks(rotation=45, ha="right", fontsize=9)
+for bar in bars:
+    ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
+            str(int(bar.get_height())), ha="center", va="bottom", fontsize=8)
+plt.tight_layout()
+plt.savefig(os.path.join(output_dir, "emotion_bar_secondary.png"), dpi=150)
+plt.show()
+print("Saved: emotion_bar_secondary.png")
+
 print(f"\nAll charts saved to ./{output_dir}/")

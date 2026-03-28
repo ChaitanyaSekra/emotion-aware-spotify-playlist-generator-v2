@@ -209,35 +209,24 @@
           </div>
         </div>
 
-        <!-- explicit filter -->
-        <div class="filter-row">
-          <span class="filter-label">EXPLICIT</span>
-          <label class="toggle">
-            <input type="checkbox" id="explicitToggle" checked />
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-          </label>
-          <span class="filter-status" id="filterStatus">ON</span>
-        </div>
-
-        <!-- track count slider -->
-        <div class="slider-row">
-          <span class="filter-label">TRACKS</span>
-          <div class="dj-slider-wrap">
-            <span class="slider-tick">5</span>
-            <div class="dj-slider-track">
-              <div class="dj-slider-fill" id="sliderFill"></div>
-              <input type="range" id="trackCountSlider" min="5" max="25" step="1" value="10" class="dj-slider" />
-              <div class="dj-notches">
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span><span></span><span></span><span></span><span></span>
-                <span></span>
-              </div>
-            </div>
-            <span class="slider-tick">25</span>
+        <!-- controls row: explicit toggle + DJ knob -->
+        <div class="controls-row">
+          <div class="filter-row">
+            <span class="filter-label">EXPLICIT</span>
+            <label class="toggle">
+              <input type="checkbox" id="explicitToggle" checked />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+            <span class="filter-status" id="filterStatus">ON</span>
           </div>
-          <span class="slider-value" id="sliderValue">10</span>
+          <div class="dj-knob-wrap">
+            <div class="dj-knob-label">TRACKS</div>
+            <div class="dj-knob-body" id="djKnobBody">
+              <canvas id="knobCanvas" width="64" height="64"></canvas>
+              <div class="dj-knob-center-ring"></div>
+            </div>
+            <span class="dj-knob-value" id="knobValue">10</span>
+          </div>
         </div>
 
         <button id="submitBtn" class="btn-primary">

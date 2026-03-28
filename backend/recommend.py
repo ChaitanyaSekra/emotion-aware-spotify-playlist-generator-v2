@@ -283,8 +283,13 @@ def score_song(song, user, id_to_emotion):
         elif any(ue in EMOTION_CLUSTERS.get(se, []) for se in song_secondaries):
             score += CLUSTER_SCORE
 
-    if song_secondaries:
-        score = int(score * (1 / len(song_secondaries) + 0.5))
+    # Normalisation: gently reduce scores on songs with many secondary labels
+    # to prevent them outranking focused primary matches.
+    # Formula: never penalises 1-secondary songs, mild reduction for 2-3.
+    # Old formula could push scores to 0 — this version is always >= original.
+    if song_secondaries and len(song_secondaries) > 1:
+        reduction = 1.0 - (len(song_secondaries) - 1) * 0.08  # -8% per extra secondary
+        score = int(score * max(0.8, reduction))
 
     # ── Audio tiebreaker (only applies when score > 0) ──
     if score > 0:
@@ -344,8 +349,8 @@ def get_feedback_map(song_ids: List[int], emotion: str) -> Dict[int, int]:
 def get_recommendations(
     text: str,
     allow_explicit: bool = True,
-    session_feedback: Dict[int, int] = None,  # {song_id: +1/-1} accumulated this session
-    track_count: int = 10                      # number of tracks to return (5-25)
+    session_feedback: Dict[int, int] = None,
+    track_count: int = 10  # {song_id: +1/-1} accumulated this session
 ) -> Dict:
 
     user_emotion = extract_emotions(text)
@@ -353,7 +358,6 @@ def get_recommendations(
     print(f"Primary   : {user_emotion['primary']}")
     print(f"Secondary : {user_emotion['secondary']}")
     print(f"Explicit  : {'allowed' if allow_explicit else 'filtered out'}")
-    print(f"Tracks    : {track_count}")
     print("------------------------------\n")
 
     with get_session() as session:
@@ -361,10 +365,25 @@ def get_recommendations(
         name_to_id = {e.emotion_name: e.emotion_id for e in emotions}
         id_to_name = {v: k for k, v in name_to_id.items()}
 
-        emotion_ids = [name_to_id[user_emotion["primary"]]] + [
+        # Core emotion IDs: primary + secondary
+        core_emotion_ids = [name_to_id[user_emotion["primary"]]] + [
             name_to_id[e] for e in user_emotion["secondary"]
             if e in name_to_id
         ]
+
+        # Cluster emotion IDs: semantically adjacent to primary + secondary
+        cluster_emotions = set()
+        for e in [user_emotion["primary"]] + user_emotion["secondary"]:
+            for ce in EMOTION_CLUSTERS.get(e, []):
+                cluster_emotions.add(ce)
+
+        cluster_emotion_ids = [
+            name_to_id[e] for e in cluster_emotions
+            if e in name_to_id
+        ]
+
+        # Fetch candidates matching core OR cluster emotions
+        emotion_ids = list(set(core_emotion_ids + cluster_emotion_ids))
 
         query = (
             select(Song, Artist)
@@ -414,5 +433,5 @@ def get_recommendations(
 
     return {
         "emotion": user_emotion,
-        "songs":   ranked[:max(5, min(25, track_count))],
+        "songs":   ranked[:max(5, min(25, track_count))]
     }
